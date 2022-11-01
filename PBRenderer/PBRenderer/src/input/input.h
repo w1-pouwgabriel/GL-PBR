@@ -1,13 +1,21 @@
 #pragma once
 #include <glfw/glfw3.h>
 
+class Camera;
+
 class Input
 {
 public:
-    Input() : isAlive(true) {};
+    Input(Camera* cam);
     ~Input() {};
 
     void processInput(GLFWwindow* window);
+    void mouse_callback(GLFWwindow* window, double xpos, double ypos); 
+    void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 private:
-    int isAlive;
+    bool isAlive; 
+    float lastX, lastY;
+    bool isFirstMouse;
+
+    Camera* theCam;
 };

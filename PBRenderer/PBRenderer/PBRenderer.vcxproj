@@ -140,11 +140,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\graphics\camera.cpp" />
     <ClCompile Include="src\graphics\shader.cpp" />
     <ClCompile Include="src\input\input.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\camera.h" />
     <ClInclude Include="src\input\input.h" />
     <ClInclude Include="src\graphics\shader.h" />
     <ClInclude Include="src\loaders\stb_image.h" />
