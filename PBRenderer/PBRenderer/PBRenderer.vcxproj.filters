@@ -48,5 +48,8 @@
   <ItemGroup>
     <None Include="src\resources\shaders\simpleShader.frag" />
     <None Include="src\resources\shaders\simpleShader.vert" />
+    <None Include="src\resources\shaders\cubeShader.vert" />
+    <None Include="src\resources\shaders\cubeShader.frag" />
+    <None Include="src\resources\shaders\defaultShader.frag" />
   </ItemGroup>
 </Project>

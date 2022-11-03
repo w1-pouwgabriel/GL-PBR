@@ -12,6 +12,13 @@ public:
 
 	//Methods
 	void Update(float deltaTime);
+
+	void MoveForward();
+	void MoveBackward();
+	void MoveLeft();
+	void MoveRight();
+
+	//Getters and setters
 	void setYaw(float newYaw);
 	void setPitch(float newPitch);
 	void setFov(float newFov);
@@ -22,11 +29,6 @@ public:
 	void setCameraFront(glm::vec3 newCameraFront);
 	glm::mat4 getView();
 	glm::mat4 getProject();
-
-	void MoveForward();
-	void MoveBackward();
-	void MoveLeft();
-	void MoveRight();
 
 private:
 	float cameraSpeed; // adjust accordingly
