@@ -19,6 +19,7 @@ public:
 	void MoveRight();
 
 	//Getters and setters
+	glm::vec3 getPos();
 	void setYaw(float newYaw);
 	void setPitch(float newPitch);
 	void setFov(float newFov);

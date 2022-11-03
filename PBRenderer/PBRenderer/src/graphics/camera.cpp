@@ -47,6 +47,10 @@ void Camera::MoveRight()
 	cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 }
 
+glm::vec3 Camera::getPos()
+{
+	return cameraPos;
+}
 void Camera::setYaw(float newYaw)
 {
 	yaw = newYaw;

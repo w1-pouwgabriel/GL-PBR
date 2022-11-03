@@ -210,6 +210,7 @@ int main()
         simpleProgram.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
         simpleProgram.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
         simpleProgram.setVec3("lightPos", lightPos);
+        simpleProgram.setVec3("viewPos", camera.getPos());
 
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.getFov()), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
