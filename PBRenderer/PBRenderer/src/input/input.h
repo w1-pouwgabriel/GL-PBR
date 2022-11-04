@@ -12,10 +12,12 @@ public:
     void processInput(GLFWwindow* window);
     void mouse_callback(GLFWwindow* window, double xpos, double ypos); 
     void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+    
 private:
     bool isAlive; 
     float lastX, lastY;
-    bool isFirstMouse;
+    bool isFirstMouse; 
+    int isMouseHide;
 
     Camera* theCam;
 };

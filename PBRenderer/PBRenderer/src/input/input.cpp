@@ -8,6 +8,8 @@ Input::Input(Camera* cam)
     lastX = 800.0f / 2.0;
     lastY = 600.0 / 2.0;
     theCam = cam;
+
+    isMouseHide = GLFW_CURSOR_DISABLED;
 }
 
 void Input::processInput(GLFWwindow* window)
@@ -22,6 +24,13 @@ void Input::processInput(GLFWwindow* window)
         theCam->MoveLeft();
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         theCam->MoveRight();
+    if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
+        if (isMouseHide == GLFW_CURSOR_DISABLED)
+            isMouseHide = GLFW_CURSOR_NORMAL;
+        else
+            isMouseHide = GLFW_CURSOR_DISABLED;
+        glfwSetInputMode(window, GLFW_CURSOR, isMouseHide);
+    }
 }
 
 void Input::mouse_callback(GLFWwindow* window, double xpos, double ypos)
