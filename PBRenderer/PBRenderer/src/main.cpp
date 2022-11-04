@@ -143,7 +143,7 @@ int main()
 
     glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
-    unsigned int VBO, VAO, lightCubeVAO, diffuseTexture;
+    unsigned int VBO, VAO, lightCubeVAO, diffuseTexture, specularTexture;
     {
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -226,10 +226,12 @@ int main()
 
         //LOAD TEXTURE
         diffuseTexture = loadTexture("./src/resources/textures/crate.png");
+        specularTexture = loadTexture("./src/resources/textures/crate_specular.png");
 
         //LINK TEXTURE TO THE SHADER PROGRAM
         simpleProgram.use();
         simpleProgram.setInt("material.diffuse", 0);
+        simpleProgram.setInt("material.specular", 1);
     }
 
     stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
@@ -280,7 +282,9 @@ int main()
 
         // bind diffuse map
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, diffuseTexture);
+        glBindTexture(GL_TEXTURE_2D, diffuseTexture); 
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, specularTexture);
 
         // render the cube
         glBindVertexArray(VAO);
