@@ -144,7 +144,11 @@ int main()
 
     glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
+<<<<<<< HEAD
     unsigned int VBO, VAO, FBO, RBO, lightCubeVAO, quadVAO, quadVBO, textureColorbuffer, textureColorbuffer2, diffuseTexture, specularTexture;
+=======
+    unsigned int VBO, VAO, lightCubeVAO, diffuseTexture, specularTexture;
+>>>>>>> 5e7dbd032a68314b5a2d6fdbe0b82f54c3c05a30
     {
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -258,6 +262,7 @@ int main()
         simpleProgram.use();
         simpleProgram.setInt("material.diffuse", 0);
         simpleProgram.setInt("material.specular", 1);
+<<<<<<< HEAD
 
         screenProgram.use();
         screenProgram.setInt("screenTexture", 1);
@@ -284,6 +289,8 @@ int main()
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+=======
+>>>>>>> 5e7dbd032a68314b5a2d6fdbe0b82f54c3c05a30
     }
 
     stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
@@ -338,11 +345,19 @@ int main()
             glm::mat4 model = glm::mat4(1.0f);
             simpleProgram.setMat4("model", model);
 
+<<<<<<< HEAD
             // bind diffuse map
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, diffuseTexture);
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, specularTexture);
+=======
+        // bind diffuse map
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, diffuseTexture); 
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, specularTexture);
+>>>>>>> 5e7dbd032a68314b5a2d6fdbe0b82f54c3c05a30
 
             // render the cube
             glBindVertexArray(VAO);
