@@ -17,8 +17,8 @@
 #include "graphics/shader.h"
 #include "graphics/camera.h"
 
-int WIDTH = 720;
-int HEIGHT = 480;
+int WIDTH = 800;
+int HEIGHT = 600;
 
 GLFWwindow* window;
 Input* inputManager;
@@ -140,10 +140,11 @@ int main()
     // as we only have a single shader, we could also just activate our shader once beforehand if we want to 
     Shader simpleProgram("./src/resources/shaders/cubeShader.vert", "./src/resources/shaders/cubeShader.frag");
     Shader lightProgram("./src/resources/shaders/cubeShader.vert", "./src/resources/shaders/defaultShader.frag");
+    Shader screenProgram("./src/resources/shaders/screenShader.vert", "./src/resources/shaders/screenShader.frag");
 
     glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
-    unsigned int VBO, VAO, lightCubeVAO, diffuseTexture;
+    unsigned int VBO, VAO, FBO, RBO, lightCubeVAO, quadVAO, quadVBO, textureColorbuffer, textureColorbuffer2, diffuseTexture, specularTexture;
     {
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -192,6 +193,18 @@ int main()
             -0.5f,  0.5f, -0.5f,  0.0f,  1.0f, 0.0f,  0.0f, 1.0f
         };
 
+        //Screen quad
+        float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+            // positions   // texCoords
+            -1.0f,  1.0f,  0.0f, 1.0f,
+            -1.0f, -1.0f,  0.0f, 0.0f,
+             1.0f, -1.0f,  1.0f, 0.0f,
+
+            -1.0f,  1.0f,  0.0f, 1.0f,
+             1.0f, -1.0f,  1.0f, 0.0f,
+             1.0f,  1.0f,  1.0f, 1.0f
+        };
+
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
         // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
@@ -224,12 +237,53 @@ int main()
 
         glBindVertexArray(0);
 
+        // screen quad VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+        glBindVertexArray(0);
+
         //LOAD TEXTURE
         diffuseTexture = loadTexture("./src/resources/textures/crate.png");
+        specularTexture = loadTexture("./src/resources/textures/crate_specular.png");
 
         //LINK TEXTURE TO THE SHADER PROGRAM
         simpleProgram.use();
         simpleProgram.setInt("material.diffuse", 0);
+        simpleProgram.setInt("material.specular", 1);
+
+        screenProgram.use();
+        screenProgram.setInt("screenTexture", 1);
+
+        // framebuffer configuration
+        // -------------------------
+        glGenFramebuffers(1, &FBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
+        // create a color attachment texture
+        glGenTextures(1, &textureColorbuffer);
+        glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+
+        // create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
+        glGenRenderbuffers(1, &RBO);
+        glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, WIDTH, HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO); // now actually attach it
+        // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
@@ -251,52 +305,88 @@ int main()
 
         // render
         // ------
+        // bind to framebuffer and draw scene as we normally would to color texture 
+        glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
         glClearColor(0.1f, 0.15f, 0.15f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
 
-        // be sure to activate shader when setting uniforms/drawing objects
-        simpleProgram.use();
-        simpleProgram.setVec3("light.position", lightPos);
-        simpleProgram.setVec3("viewPos", camera.getPos());
+        //Draw scene
+        {
+            // be sure to activate shader when setting uniforms/drawing objects
+            simpleProgram.use();
+            simpleProgram.setVec3("light.position", lightPos);
+            simpleProgram.setVec3("viewPos", camera.getPos());
 
-        // light properties
-        simpleProgram.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-        simpleProgram.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
-        simpleProgram.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+            // light properties
+            simpleProgram.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+            simpleProgram.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+            simpleProgram.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 
-        // material properties
-        simpleProgram.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
-        simpleProgram.setFloat("material.shininess", 64.0f);
+            // material properties
+            simpleProgram.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+            simpleProgram.setFloat("material.shininess", 64.0f);
 
-        // view/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(camera.getFov()), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
-        glm::mat4 view = camera.getView();
-        simpleProgram.setMat4("projection", projection);
-        simpleProgram.setMat4("view", view);
+            // view/projection transformations
+            glm::mat4 projection = glm::perspective(glm::radians(camera.getFov()), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+            glm::mat4 view = camera.getView();
+            simpleProgram.setMat4("projection", projection);
+            simpleProgram.setMat4("view", view);
 
-        // world transformation
-        glm::mat4 model = glm::mat4(1.0f);
-        simpleProgram.setMat4("model", model);
+            // world transformation
+            glm::mat4 model = glm::mat4(1.0f);
+            simpleProgram.setMat4("model", model);
 
-        // bind diffuse map
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, diffuseTexture);
+            // bind diffuse map
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, diffuseTexture);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, specularTexture);
 
-        // render the cube
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+            // render the cube
+            glBindVertexArray(VAO);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        // also draw the lamp object
-        lightProgram.use();
-        lightProgram.setMat4("projection", projection);
-        lightProgram.setMat4("view", view);
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, lightPos);
-        model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
-        lightProgram.setMat4("model", model);
+            // also draw the lamp object
+            lightProgram.use();
+            lightProgram.setMat4("projection", projection);
+            lightProgram.setMat4("view", view);
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, lightPos);
+            model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
+            lightProgram.setMat4("model", model);
 
-        glBindVertexArray(lightCubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+            glBindVertexArray(lightCubeVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+            glBindVertexArray(0);
+        }
+
+        // now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+        // clear all relevant buffers
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+        glClear(GL_COLOR_BUFFER_BIT);
+
+
+        float left = 0.5;
+        float right = -0.5;
+
+        screenProgram.use();
+        glBindVertexArray(quadVAO);
+        screenProgram.setFloat("PositionOnScreen", left);
+        glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        
+        //Clear the buffers
+        glBindVertexArray(0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        glBindVertexArray(quadVAO);
+        screenProgram.setFloat("PositionOnScreen", right);
+        glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -308,7 +398,9 @@ int main()
     // ------------------------------------------------------------------------
     glDeleteVertexArrays(1, &VAO);
     glDeleteVertexArrays(1, &lightCubeVAO);
+    glDeleteVertexArrays(1, &quadVAO);
     glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &quadVBO);
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------

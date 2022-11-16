@@ -18,6 +18,7 @@ private:
     float lastX, lastY;
     bool isFirstMouse; 
     int isMouseHide;
+    int isWireFrame;
 
     Camera* theCam;
 };

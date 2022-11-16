@@ -31,6 +31,13 @@ void Input::processInput(GLFWwindow* window)
             isMouseHide = GLFW_CURSOR_DISABLED;
         glfwSetInputMode(window, GLFW_CURSOR, isMouseHide);
     }
+    if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
+        if (isWireFrame == GL_LINE)
+            isWireFrame = GL_FILL;
+        else
+            isWireFrame = GL_LINE;
+        glPolygonMode(GL_FRONT_AND_BACK, isWireFrame);
+    }
 }
 
 void Input::mouse_callback(GLFWwindow* window, double xpos, double ypos)
